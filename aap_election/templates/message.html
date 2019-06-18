@@ -1,0 +1,276 @@
+{% include "/includes/head.html" %}
+<title>{% block title %}{% endblock %}  Aam Aadmi Party</title>
+
+{% block css %}{% endblock %}
+</head>
+<body>
+     <div id="mount-point" style="background:#cecece"></div>
+</body>
+
+<footer>
+    <script type="text/jsx">
+        class Row extends React.Component{
+            constructor(props){
+                super(props);
+                this.state = {
+                    show_details:false,
+                    show_row:true
+                }
+            }
+            truncate(s) {
+                console.log(s);
+               if (s.length > 500)
+                     return s.substring(0, 500) + "....(TRUNCATED)";
+                  else
+                     return s;
+            }
+            update_message(d){
+                if(this.state.updated_text){
+                    this.setState({loading:true,show_update_interface:false});
+             fetch(`/api/v1/update_message/${d.id}`, {
+                     headers:{
+                         'Accept': 'application/json',
+                         'Content-Type': 'application/json'
+                     },
+                     method:'PATCH',
+                    body:JSON.stringify({text:this.state.updated_text})
+                 }).then(resp=>resp.json()).then(resp=>{
+                console.log(resp)
+            });
+                }
+
+         }
+            render(){
+                let {text,received_from_users} = this.props.data;
+                let users = this.props.users;
+                return (
+                    <tr>
+                        {this.state.show_row&&<td className="" style={ {fontSize:"16px"} }>
+                            {this.state.show_update_interface ?
+                            <div className="ui fluid form"><textarea rows="4"
+                                                                       onChange={(e)=>{e.preventDefault();this.setState({updated_text:e.target.value})}}
+                                                                       id="update-text"
+                                                                   value={this.state.updated_text!==undefined?this.state.updated_text:text}
+                            /></div>:
+                            this.truncate(this.state.updated_text!==undefined?this.state.updated_text:text)}
+                        </td>}
+                        {this.state.show_row&&
+                            <td className="" >
+                                <table className="ui basic table">
+                                    <tbody className="">
+                                        <tr className="negative">
+                                            <td className="selectable"
+                                                onClick={(e)=>{
+                                                    e.preventDefault()
+                                                    received_from_users.length>0 ?
+                                                    this.setState({show_details_none:true,show_row:false})
+                                                    :
+                                                    ""
+                                                }}
+                                            >
+                                                <a href="#">
+                                                    <h2 className="ui center aligned red header">
+                                                        {users.length-received_from_users.length}
+                                                    </h2>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        <tr className="warning">
+                                            <td className="selectable"
+                                                onClick={(e)=>{
+                                                    e.preventDefault()
+                                                    received_from_users.length>0 ?
+                                                        this.setState({show_details_some:true,show_row:false})
+                                                        :
+                                                        ""
+                                                }}
+                                            >
+                                                <a href="#">
+                                                    <h2 className="ui center aligned yellow header">{received_from_users.filter(u=>u.user.broadcast_count>u.receive_count).length}</h2>
+                                                </a>
+                                            </td>
+
+                                        </tr>
+                                        <tr className="positive">
+                                            <td className="selectable"
+                                                onClick={(e)=>{
+                                                    e.preventDefault();
+                                                    received_from_users.length>0 ?
+                                                        this.setState({show_details_all:true,show_row:false})
+                                                        :
+                                                        ""
+                                                }}
+                                            >
+                                                <a href="#">
+                                                    <h2 className="ui center aligned green header">{received_from_users.filter(u=>u.user.broadcast_count<=u.receive_count).length}</h2>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>}
+                        {this.state.show_row&&<td>
+                            {this.state.show_update_interface&&<button onClick={()=>this.update_message(this.props.data)} className="ui positive button">Save</button>}
+                            {this.state.show_update_interface&&<button onClick={()=>this.setState({updated_text:text,show_update_interface:false})} className="ui button">Back</button>}
+                            {!this.state.show_update_interface&&<button onClick={()=>this.setState({show_update_interface:true})} className="ui button">Edit</button>}
+                            {!this.state.show_update_interface&&<button onClick={()=>this.props.delete_message(this.props.data)} className="ui negative button">Delete</button>}
+                        </td>}
+                        {this.state.show_details_none&&<td colSpan="3" className="negative" onClick={()=>this.setState({show_details_none:false,show_row:true})}>
+                            <div>
+                                <i className="arrow left icon" onClick={()=>this.setState({show_details_none:false,show_row:true})}/>
+                                <div style={ {fontSize:"16px"} }>{text}</div>
+                                <div role="list" className="ui selection middle aligned ordered list" style={ {width: "60%", marginLeft: "170px"} }>
+                                    {users.filter(u=>received_from_users.map(us=>us.user.id).indexOf(u.id)===-1).map(user=>
+                                        <div role="listitem" className="item">
+                                            <img src="http://www.sfb902.de/wp-content/uploads/2016/01/dummy-user_1366220506.jpg" className="ui avatar image"/>
+                                        <div className="content">
+                                            <div className="header"> {user.name}</div>
+                                            ({user.number})
+                                        </div>
+                                            <h2 className="ui right floated header"> 0 / {user.broadcast_count || "Null"}</h2>
+                                    </div>)}
+                                </div>
+                            </div>
+
+                        </td>}
+                        {this.state.show_details_some&&<td colSpan="3" className="warning" onClick={()=>this.setState({show_details_some:false,show_row:true})}>
+                            <div>
+                                <i className="arrow left icon" onClick={()=>this.setState({show_details_some:false,show_row:true})}/>
+                                <div style={ {fontSize:"16px"} }>{text}</div>
+                                <div role="list" className="ui selection middle aligned ordered list" style={ {width: "60%", marginLeft: "170px"} }>
+                                    {received_from_users.filter(u=>u.user.broadcast_count > u.receive_count).map(user=>
+                                        <div role="listitem" className="item">
+                                            <img src="http://www.sfb902.de/wp-content/uploads/2016/01/dummy-user_1366220506.jpg" className="ui avatar image"/>
+                                        <div className="content">
+                                            <div className="header"> {user.user.name}</div>
+                                            ({user.user.number})
+                                        </div>
+                                            <h2 className="ui right floated header"> {user.receive_count} / {user.user.broadcast_count || "Null"}</h2>
+                                    </div>)}
+                                </div>
+                            </div>
+
+                        </td>}
+                        {this.state.show_details_all&&<td colSpan="3" className="positive" onClick={()=>this.setState({show_details_all:false,show_row:true})}>
+                            <div>
+                                <i className="arrow left icon" onClick={()=>this.setState({show_details_all:false,show_row:true})}/>
+                                <div style={ {fontSize:"16px"} }>{text}</div>
+                                <div role="list" className="ui selection middle aligned ordered list" style={ {width: "60%", marginLeft: "170px"} }>
+                                    {received_from_users.filter(u=>u.user.broadcast_count<=u.receive_count).map(user=>
+                                        <div role="listitem" className="item">
+                                            <img src="http://www.sfb902.de/wp-content/uploads/2016/01/dummy-user_1366220506.jpg" className="ui avatar image"/>
+                                        <div className="content">
+                                            <div className="header"> {user.user.name}</div>
+                                            ({user.user.number})
+                                        </div>
+                                            <h2 className="ui right floated header"> {user.receive_count} / {user.user.broadcast_count || "Null"}</h2>
+                                    </div>)}
+                                </div>
+                            </div>
+                        </td>}
+                    </tr>
+                )
+            }
+        }
+        class MessageTable extends React.Component{
+            constructor(props){
+            super(props);
+            this.state = {
+                data:[],
+                show_interface:false,
+                message_text: "",
+                users:[]
+            }
+        }
+         componentDidMount(){
+             console.log('here');
+            fetch('/api/v1/messages?is_active=true').then(resp=>resp.json()).then(resp=>{
+                // console.log(resp);
+                this.setState({data: resp.result})
+            });
+            fetch('/api/v1/users?per_page=5000').then(resp=>resp.json()).then(resp=>{
+                // console.log(resp);
+                this.setState({users: resp.result});
+                console.log(this.state.users)
+            });
+         }
+         add_message(){
+                if(this.state.message_text) {
+                    console.log(this.state.message_text);
+                    fetch('/api/v1/create_message',
+                        {
+                            headers: {
+                              'Accept': 'application/json',
+                              'Content-Type': 'application/json'
+                            },
+                            method: "POST",
+                            body: JSON.stringify({text: this.state.message_text})
+                        }).then(resp=>resp.json()).then(resp=>{
+                             let newData = this.state.data.slice();
+                             newData.unshift(resp);
+                             this.setState({data:newData})
+                        });
+                    document.getElementById('msg-text').value = ''
+
+                }
+         }
+         delete_message(d){
+             if (window.confirm("Are you sure?")){
+              this.setState({loading:true});
+             fetch(`/api/v1/delete_message/${d.id}`,{headers:{'Accept': 'application/json'}, method:"DELETE"}).then(resp=>resp.json()).then(resp=>{
+                console.log(resp);
+                let array = [...this.state.data]; // make a separate copy of the array
+              let index = array.indexOf(d);
+                  if (index !== -1) {
+                    array.splice(index, 1);
+                    this.setState({data: array});
+                  }
+                // this.state.data.splice(this.state.data.indexOf(d), 1);
+                this.setState({loading:false})
+            });
+             }
+         }
+        render(){
+            const {data} = this.state;
+            // console.log(data);
+            return (
+                <div className="ui container">
+                    <div>
+                        <h1 className="ui header">
+                            Messages
+                            <button className="ui right floated primary button" onClick={()=>{this.setState({show_interface:!this.state.show_interface})}}>Add a Message</button>
+                        </h1>
+                    </div>
+                    {this.state.show_interface&&
+                        <div>
+                            <form className="ui form">
+                                <textarea
+                                    id="msg-text"
+                                    onChange={(e)=>this.setState({message_text:e.target.value})}
+                                    placeholder="Enter Message"
+                                    rows="3"/>
+                                <button className="ui right floated mini primary button" onClick={(e)=>{e.preventDefault();this.add_message()}}>Submit</button>
+                            </form>
+
+                        </div>
+                    }
+                    <table className="ui celled fixed table">
+                        <thead className="">
+                            <tr className="">
+                                <th className="">Text</th>
+                                <th className="">Received from</th>
+                                <th>Options</th>
+                            </tr>
+                        </thead>
+                        <tbody className="">
+                        {data.map(d => <Row data={d} users={this.state.users} delete_message={this.delete_message.bind(this)}/>)}
+                        </tbody>
+                    </table>
+                </div>
+                );
+        }
+    }
+    React.render(<MessageTable />, document.getElementById('mount-point') );
+     </script>
+    {% block footJs %}{% endblock %}
+    {% include "/includes/foot.html" %}
