@@ -18,6 +18,6 @@ From inside the repository, run:
     
     python manage.py db upgrade
     
-    python manage.py cron -n Whatsapp
+    python manage.py cron -n Election
     
     python manage.py runserver
